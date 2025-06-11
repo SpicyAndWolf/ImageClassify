@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FolderListItem</class>
+ <widget class="QWidget" name="FolderListItem">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>41</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#FolderListItem {
+    background-color: #ffffff;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    margin: 2px;
+    padding: 4px;
+}
+
+QWidget#FolderListItem:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+QWidget#FolderListItem:focus {
+    border-color: #007bff;
+}</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+   <property name="topMargin">
+    <number>5</number>
+   </property>
+   <property name="rightMargin">
+    <number>5</number>
+   </property>
+   <property name="bottomMargin">
+    <number>5</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="folderPathLabel">
+     <property name="styleSheet">
+      <string notr="true">QLabel {
+    color: #495057;
+    font-size: 16px;
+    font-family: &quot;Segoe UI&quot;, &quot;Microsoft YaHei&quot;, Arial, sans-serif;
+    font-weight: 400;
+    background: transparent;
+    border: none;
+    padding: 6px 8px;
+    margin: 0px;
+}
+
+QLabel:hover {
+    color: #212529;
+}</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="deleteBtn">
+     <property name="minimumSize">
+      <size>
+       <width>50</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>50</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: #dc3545;
+    color: white;
+    border: solid 1px transparent;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: &quot;Segoe UI&quot;, &quot;Microsoft YaHei&quot;, Arial, sans-serif;
+    padding: 6px 12px;
+}
+
+QPushButton:hover {
+    background-color: #c82333;
+}
+
+QPushButton:pressed {
+    background-color: #bd2130;
+}
+
+QPushButton:focus {
+    outline: none;
+}</string>
+     </property>
+     <property name="text">
+      <string>Del</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

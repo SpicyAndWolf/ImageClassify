@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>609</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">Background-color:white;</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item alignment="Qt::AlignVCenter">
+     <widget class="QWidget" name="toolsWidget" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>40</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>40</height>
+       </size>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>5</number>
+       </property>
+       <item>
+        <widget class="QPushButton" name="selectFoldersBtn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#selectFoldersBtn {
+    background-color: #4CAF50;
+    color: white;
+    border: solid 1px;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#selectFoldersBtn:hover {
+    background-color: #45a049; 
+}
+
+#selectFoldersBtn:pressed {
+    background-color: #3d8b40;
+}</string>
+         </property>
+         <property name="text">
+          <string>选择文件夹</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="startClassifyBtn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#startClassifyBtn {
+    background-color: rgb(30, 193, 207);
+    color: white;
+    border: solid 1px;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#startClassifyBtn:hover {
+    background-color: rgb(30, 183, 197); 
+}
+
+#startClassifyBtn:pressed {
+    background-color: rgb(20, 173, 187);
+}</string>
+         </property>
+         <property name="text">
+          <string>开始处理</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="stopClassifyBtn">
+         <property name="styleSheet">
+          <string notr="true">#stopClassifyBtn {
+    background-color: rgb(255, 83, 106);
+    color: white;
+    border: solid 1px;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#stopClassifyBtn:hover {
+    background-color:rgb(240, 75, 96); 
+}
+
+#stopClassifyBtn:pressed {
+    background-color: rgb(230, 70, 90);
+}</string>
+         </property>
+         <property name="text">
+          <string>停止处理</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="contentWidget" native="true">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QListWidget" name="selectedFoldersList">
+         <property name="styleSheet">
+          <string notr="true">#selectedFoldersList {
+    /* 基本样式 */
+    background-color: rgb(241, 241, 241); /* 浅灰蓝色背景，现代感 */
+    border: 1px solid #dcdcdc; /* 浅灰色边框 */
+    border-radius: 8px; /* 圆角 */
+    padding: 4px; /* 内边距 */
+    font-size: 15px; /* 字体大小 */
+    font-family: &quot;Segoe UI&quot;, Arial, sans-serif; /* 现代字体 */
+    color: #333333; /* 深灰色文字 */
+    show-decoration-selected: 1; /* 确保选中项装饰可见 */
+}</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
