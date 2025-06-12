@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
+    <width>900</width>
     <height>609</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>900</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>16777215</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -47,7 +59,7 @@
         <height>40</height>
        </size>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0,1,0,0">
        <property name="topMargin">
         <number>5</number>
        </property>
@@ -88,7 +100,7 @@
 }</string>
          </property>
          <property name="text">
-          <string>选择文件夹</string>
+          <string>选择原图像文件夹</string>
          </property>
         </widget>
        </item>
@@ -126,7 +138,7 @@
 }</string>
          </property>
          <property name="text">
-          <string>开始处理</string>
+          <string>开始分类</string>
          </property>
         </widget>
        </item>
@@ -152,7 +164,7 @@
 }</string>
          </property>
          <property name="text">
-          <string>停止处理</string>
+          <string>停止分类</string>
          </property>
         </widget>
        </item>
@@ -168,6 +180,56 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="resFolderLabel">
+         <property name="minimumSize">
+          <size>
+           <width>250</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>250</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 13px;
+font-weight:Bold;
+color:rgb(98, 98, 98);</string>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;E:/Path/imgs&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="selectResFolderBtn">
+         <property name="styleSheet">
+          <string notr="true">#selectResFolderBtn {
+    background-color: rgb(165, 165, 165);
+    color: white;
+    border: solid 1px;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#selectResFolderBtn:hover {
+    background-color:rgb(150, 155, 165); 
+}
+
+#selectResFolderBtnrgb:pressed {
+    background-color: rgb(140, 150, 155);
+}</string>
+         </property>
+         <property name="text">
+          <string>设置分类结果路径</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -202,7 +264,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>900</width>
      <height>23</height>
     </rect>
    </property>

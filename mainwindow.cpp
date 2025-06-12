@@ -8,6 +8,9 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QDebug>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QRegularExpression>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -19,13 +22,27 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setWindowIcon(QIcon(":/res/icon.png"));
 
+    // 设置标签文本省略模式
+    ui->resFolderLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter); // 文本右对齐
+    ui->resFolderLabel->setWordWrap(false);  // 禁用自动换行
+    ui->resFolderLabel->setTextFormat(Qt::PlainText);  // 使用纯文本格式
+
+    // 初始化配置对象
+    QString configPath = QCoreApplication::applicationDirPath() + "/config.ini";
+    settings = new QSettings(configPath, QSettings::IniFormat, this);
+
+
     // 连接按钮点击信号到槽函数
     connect(ui->selectFoldersBtn, &QPushButton::clicked, this, &MainWindow::onSelectFoldersBtnClicked);
     connect(ui->startClassifyBtn, &QPushButton::clicked, this, &MainWindow::onStartClassifyBtnClicked);
     connect(ui->stopClassifyBtn, &QPushButton::clicked, this, &MainWindow::onStopClassifyBtnClicked);
+    connect(ui->selectResFolderBtn, &QPushButton::clicked, this, &MainWindow::onSelectResFolderBtnClicked);
 
     // 初始状态下隐藏终止按钮
     ui->stopClassifyBtn->setVisible(false);
+
+    // 加载保存的配置
+    loadSettings();
 }
 
 MainWindow::~MainWindow()
@@ -122,7 +139,7 @@ void MainWindow::onStartClassifyBtnClicked()
 
     // 禁用按钮防止重复点击
     ui->startClassifyBtn->setEnabled(false);
-    ui->startClassifyBtn->setText("处理中...");
+    ui->startClassifyBtn->setText("分类中...");
     ui->stopClassifyBtn->setVisible(true);
 
     // 构建Python脚本路径
@@ -135,7 +152,7 @@ void MainWindow::onStartClassifyBtnClicked()
     if (!QFile::exists(scriptPath)) {
         QMessageBox::critical(this, tr("错误"), tr("找不到OCR脚本文件：") + scriptPath);
         ui->startClassifyBtn->setEnabled(true);
-        ui->startClassifyBtn->setText("开始处理");
+        ui->startClassifyBtn->setText("开始分类");
         return;
     }
 
@@ -143,7 +160,7 @@ void MainWindow::onStartClassifyBtnClicked()
     if (!QFile::exists(venvPythonPath)) {
         QMessageBox::critical(this, tr("错误"), tr("找不到venv Python解释器：") + venvPythonPath);
         ui->startClassifyBtn->setEnabled(true);
-        ui->startClassifyBtn->setText("开始处理");
+        ui->startClassifyBtn->setText("开始分类");
         return;
     }
 
@@ -153,6 +170,7 @@ void MainWindow::onStartClassifyBtnClicked()
     // 构建命令参数
     QStringList arguments;
     arguments << scriptPath;
+    arguments << "--resPath" << resFolderPath;
     arguments << selectedFolderPaths;  // 将所有选中的文件夹路径作为参数
 
     // 连接进程完成信号
@@ -162,7 +180,27 @@ void MainWindow::onStartClassifyBtnClicked()
                 resetButtonStates();
 
                 if (exitStatus == QProcess::NormalExit && exitCode == 0) {
-                    QMessageBox::information(this, tr("完成"), tr("图片分类处理完成！"));
+                    // 读取进程输出，解析统计信息
+                    QString output = currentProcess->readAllStandardOutput();
+                    qDebug()<<output;
+                    QRegularExpression regex("FINAL_STATISTICS: TOTAL=(\\d+), PROCESSED=(\\d+), CATEGORIES=(\\d+)");
+                    QRegularExpressionMatch match = regex.match(output);
+
+                    // 打印信息
+                    if (match.hasMatch()) {
+                        int totalImages = match.captured(1).toInt();
+                        int processedImages = match.captured(2).toInt();
+                        int categories = match.captured(3).toInt();
+
+                        QString message = QString("分类完成！\n\n")
+                                        + QString("总共处理图片：%1 张\n").arg(totalImages)
+                                        + QString("成功分类图片：%2 张\n").arg(processedImages)
+                                        + QString("分类类别数量：%3 个").arg(categories);
+
+                        QMessageBox::information(this, tr("分类完成"), message);
+                    } else {
+                        QMessageBox::information(this, tr("完成"), tr("图片分类处理完成！"));
+                    }
                 }
                 else if (exitStatus == QProcess::CrashExit) {
                     QMessageBox::information(this, tr("已终止"), tr("处理已被用户终止"));
@@ -238,9 +276,64 @@ void MainWindow::onStopClassifyBtnClicked()
     }
 }
 
+void MainWindow::onSelectResFolderBtnClicked()
+{
+    // 打开文件夹选择对话框
+    QString selectedDir = QFileDialog::getExistingDirectory(
+        this,
+        tr("选择分类结果保存文件夹"),
+        resFolderPath.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) : resFolderPath,
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+    );
+
+    // 如果用户选择了文件夹
+    if (!selectedDir.isEmpty()) {
+        resFolderPath = selectedDir;
+
+        // 更新标签显示，这里的处理是为了文本过长时的省略显示
+        QFontMetrics metrics(ui->resFolderLabel->font());
+        QString elidedText = metrics.elidedText(resFolderPath, Qt::ElideMiddle, ui->resFolderLabel->width() - 60);
+        ui->resFolderLabel->setText(elidedText);
+        ui->resFolderLabel->setToolTip(resFolderPath);
+
+        // 保存配置
+        saveSettings();
+    }
+}
+
+void MainWindow::loadSettings()
+{
+    // 加载结果文件夹路径
+    resFolderPath = settings->value("resFolderPath", "").toString();
+
+    // 如果有保存的路径，更新标签显示，这里的处理是为了文本过长时的省略显示
+    if (!resFolderPath.isEmpty()) {
+        QFontMetrics metrics(ui->resFolderLabel->font());
+        QString elidedText = metrics.elidedText(resFolderPath, Qt::ElideMiddle, ui->resFolderLabel->width() - 60);
+        ui->resFolderLabel->setText(elidedText);
+        ui->resFolderLabel->setToolTip(resFolderPath);
+    }
+    // 否则默认输出路径为程序所在路径下的res目录，这里的处理是为了文本过长时的省略显示
+    else{
+        resFolderPath = QCoreApplication::applicationDirPath() + "/res";
+        QFontMetrics metrics(ui->resFolderLabel->font());
+        QString elidedText = metrics.elidedText(resFolderPath, Qt::ElideMiddle, ui->resFolderLabel->width()-60);
+        ui->resFolderLabel->setText(elidedText);
+        ui->resFolderLabel->setToolTip(resFolderPath);
+    }
+}
+
+void MainWindow::saveSettings()
+{
+    // 保存结果文件夹路径
+    settings->setValue("resFolderPath", resFolderPath);
+    settings->sync();  // 确保立即写入
+}
+
+
 void MainWindow::resetButtonStates()
 {
     ui->startClassifyBtn->setEnabled(true);
-    ui->startClassifyBtn->setText("开始处理");
+    ui->startClassifyBtn->setText("开始分类");
     ui->stopClassifyBtn->setVisible(false);
 }

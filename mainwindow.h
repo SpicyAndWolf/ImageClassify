@@ -6,6 +6,7 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QProcess>
+#include <QSettings>
 #include "folderlistitem.h"
 
 QT_BEGIN_NAMESPACE
@@ -25,6 +26,7 @@ private slots:
     void onDeleteFolderItem(const QString &folderPath);
     void onStartClassifyBtnClicked();
     void onStopClassifyBtnClicked();
+    void onSelectResFolderBtnClicked();
 
 private:
     Ui::MainWindow *ui;
@@ -32,9 +34,13 @@ private:
     QStringList selectedFolderPaths;
     QProcess *currentProcess; // 保存当前正在运行的进程，以便中途终止
     bool isUserTerminated;
+    QString resFolderPath;  // 存储结果文件夹路径
+    QSettings *settings;
 
     // 添加带删除按钮的列表项
     void addFolderItemWithDeleteButton(const QString &folderPath);
     void resetButtonStates();
+    void loadSettings();
+    void saveSettings();
 };
 #endif // MAINWINDOW_H
