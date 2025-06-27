@@ -3,11 +3,24 @@ import cv2
 import os
 import shutil
 from pathlib import Path
+import tempfile
 import argparse
 import signal
 import logging
 import sys
 from datetime import datetime
+import ssl
+import numpy as np
+
+# 解决在新环境中SSL证书验证失败的问题
+# easyocr首次运行时需要下载模型，这可能会因为缺少系统根证书而失败
+# 这段代码会尝试禁用SSL证书验证，仅用于下载模型
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 # 配置日志
 def setup_logging(log_level=logging.INFO):
@@ -54,19 +67,70 @@ def signal_handler(signum, frame):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
+# 用于把ocr模型移动至目标目录，这样就不用下载了
+def copy_file_to_easyocr_model_dir(filename):
+    """
+    将指定文件从当前目录复制到当前用户的EasyOCR模型目录下。
+
+    Args:
+        filename (str): 要复制的文件名。
+
+    Returns:
+        bool: 如果复制成功返回 True，否则返回 False。
+    """
+    try:
+        # 获取源文件路径
+        source_path = os.path.join(os.getcwd(), "pth", filename)
+
+        # 检查源文件是否存在
+        if not os.path.exists(source_path):
+            logger.error(f"错误：源文件 '{source_path}' 不存在。")
+            return False
+
+        # 获取用户主目录
+        user_home_dir = os.path.expanduser('~')
+        destination_dir = os.path.join(user_home_dir, '.EasyOCR', 'model')
+
+        # 验证文件是否已存在
+        final_path = os.path.join(destination_dir, filename)
+        if os.path.exists(final_path):
+            logger.info(f"文件已成功位于: '{final_path}'")
+            return True
+
+        # 确保目标目录存在
+        os.makedirs(destination_dir, exist_ok=True)
+
+        # 执行复制操作
+        logger.info(f"正在复制 '{source_path}' 至 '{destination_dir}'...")
+        shutil.copy2(source_path, destination_dir)
+        
+        # 验证文件是否真的复制过去了
+        if os.path.exists(final_path):
+            logger.info(f"文件已成功位于: '{final_path}'")
+            return True
+        else:
+            logger.error("错误：复制后文件验证失败。")
+            return False
+
+    except PermissionError:
+        logger.error("错误：权限不足。请尝试使用管理员权限运行此脚本。")
+        return False
+    except Exception as e:
+        logger.error(f"发生未知错误: {e}")
+        return False
+
 # 识别图片并返回识别结果
-def ocrImg(image_path):
+def ocrImg(img_data):
     reader = easyocr.Reader(['en'])
 
-    # 读取图片并获取其宽度，用于判断左右侧
-    img = cv2.imread(image_path)
-    if img is None:
-        logger.error(f"无法读取图片: {image_path}")
+    # 获取图片宽度，用于判断左右侧
+    if img_data is None:
+        logger.error("图像数据为空")
         return None
-    image_height, image_width, _ = img.shape
+    image_height, image_width, _ = img_data.shape
 
-    # 从图片中识别文本
-    results = reader.readtext(image_path)
+    # 从图片中识别文本，直接传递图像数据
+    results = reader.readtext(img_data)
 
     # 筛选并提取左侧的目标文本
     target_text = ""
@@ -81,16 +145,25 @@ def ocrImg(image_path):
         text = target_text.split(' ')[0]
         return text
     else:
-        logger.warning(f"未识别到目标文字: {image_path}")
+        logger.warning("未识别到目标文字")
         return None
 
 # 裁剪区域
-def cropImg(image_path, output_path):
-    # 读取图片
-    img = cv2.imread(image_path)
-    if img is None:
-        logger.error(f"无法读取图片: {image_path}")
-        return False
+def cropImg(image_path):
+    try:
+        # 使用可以处理Unicode路径的方式读取文件到内存缓冲区
+        with open(image_path, 'rb') as f:
+            img_buffer = np.frombuffer(f.read(), dtype=np.uint8)
+        
+        # 从内存缓冲区解码图像
+        img = cv2.imdecode(img_buffer, cv2.IMREAD_COLOR)
+
+        if img is None:
+            logger.error(f"无法解码图片: {image_path}")
+            return None
+    except Exception as e:
+        logger.error(f"读取图片时发生错误 {image_path}: {e}")
+        return None
 
     # 获取图片高度和宽度
     height, width, _ = img.shape
@@ -103,15 +176,21 @@ def cropImg(image_path, output_path):
 
     # 裁剪图片
     cropped_img = img[y_start:y_end, x_start:x_end]
+    logger.info(cropped_img.shape)
+    
+    return cropped_img
 
-    # 保存裁剪后的图片
-    cv2.imwrite(output_path, cropped_img)
-    return True
 
 # 处理imgs文件夹下的所有图片
 def processAllImages(imgs_folder, res_path="./res"):
     global should_stop
-    temp_cropped = "temp_cropped.png"
+
+    # # 使用 tempfile 来获取一个可靠的临时文件路径，用于存储裁剪结果，这会自动处理权限和路径编码问题
+    # temp_fd, temp_cropped_path = tempfile.mkstemp(suffix=".png")
+    # os.close(temp_fd) # 只需要路径，所以关闭文件描述符
+    # logger.info(f"使用临时文件: {temp_cropped_path}")
+    
+    # 设置结果文件夹和错误文件夹
     base_folder = res_path
     error_folder = os.path.join(base_folder, "error")
 
@@ -160,9 +239,10 @@ def processAllImages(imgs_folder, res_path="./res"):
         logger.info(f"\n处理图片: {image_file}")
         
         # 裁剪图片
-        if cropImg(image_path, temp_cropped):
+        cropped_img = cropImg(image_path)
+        if cropped_img is not None:
             # OCR识别
-            ocr_result = ocrImg(temp_cropped)
+            ocr_result = ocrImg(cropped_img)
             
             if ocr_result:
                 # 尝试创建目标文件夹
@@ -209,8 +289,8 @@ def processAllImages(imgs_folder, res_path="./res"):
                 logger.error(f"复制图片到错误文件夹失败: {e}")
     
     # 清理临时文件
-    if os.path.exists(temp_cropped):
-        os.remove(temp_cropped)
+    if os.path.exists(temp_cropped_path):
+        os.remove(temp_cropped_path)
     
     if should_stop:
         logger.warning("\n处理被中断！")
@@ -220,8 +300,14 @@ def processAllImages(imgs_folder, res_path="./res"):
             'processed': processed_images,
             'categories': categories
         }
+    
+
 # 调用函数
 if __name__ == "__main__":
+    # 初始化模型文件，避免下载时网络问题
+    copy_file_to_easyocr_model_dir("craft_mlt_25k.pth")
+    copy_file_to_easyocr_model_dir("english_g2.pth")
+
     # 获取待处理图像所在文件路径
     parser = argparse.ArgumentParser(description="OCR and Image Processing")
     parser.add_argument('--resPath', '-o', default='./res', help='输出文件夹路径')
