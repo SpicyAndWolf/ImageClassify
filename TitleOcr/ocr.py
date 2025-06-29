@@ -180,15 +180,26 @@ def cropImg(image_path):
     
     return cropped_img
 
+# 检查图片是否已经被分类
+def is_image_already_classified(image_file, base_folder):
+    """检查图片是否已经在某个分类文件夹中"""
+    if not os.path.exists(base_folder):
+        return False
+        
+    # 遍历所有子文件夹
+    for item in os.listdir(base_folder):
+        item_path = os.path.join(base_folder, item)
+        if os.path.isdir(item_path):
+            # 检查该文件夹中是否存在同名图片
+            target_file = os.path.join(item_path, image_file)
+            if os.path.exists(target_file):
+                logger.info(f"图片 {image_file} 已存在于分类文件夹 {item} 中，跳过处理")
+                return True
+    return False
 
 # 处理imgs文件夹下的所有图片
 def processAllImages(imgs_folder, res_path="./res"):
     global should_stop
-
-    # # 使用 tempfile 来获取一个可靠的临时文件路径，用于存储裁剪结果，这会自动处理权限和路径编码问题
-    # temp_fd, temp_cropped_path = tempfile.mkstemp(suffix=".png")
-    # os.close(temp_fd) # 只需要路径，所以关闭文件描述符
-    # logger.info(f"使用临时文件: {temp_cropped_path}")
     
     # 设置结果文件夹和错误文件夹
     base_folder = res_path
@@ -197,6 +208,7 @@ def processAllImages(imgs_folder, res_path="./res"):
     # 统计变量
     total_images = 0
     processed_images = 0
+    skipped_images = 0 
     categories = set()  # 使用集合来统计不重复的类别
     
     # 检查imgs文件夹是否存在
@@ -234,6 +246,11 @@ def processAllImages(imgs_folder, res_path="./res"):
         if should_stop:
             logger.warning("\n程序被用户终止")
             break
+
+        # 检查图片是否已经被分类
+        if is_image_already_classified(image_file, base_folder):
+            skipped_images += 1
+            continue
 
         image_path = os.path.join(imgs_folder, image_file)
         logger.info(f"\n处理图片: {image_file}")
@@ -288,16 +305,13 @@ def processAllImages(imgs_folder, res_path="./res"):
             except Exception as e:
                 logger.error(f"复制图片到错误文件夹失败: {e}")
     
-    # 清理临时文件
-    if os.path.exists(temp_cropped_path):
-        os.remove(temp_cropped_path)
-    
     if should_stop:
         logger.warning("\n处理被中断！")
     else:
         return {
             'total': total_images,
             'processed': processed_images,
+            'skipped': skipped_images,
             'categories': categories
         }
     
@@ -317,6 +331,7 @@ if __name__ == "__main__":
     # 初始化统计变量
     all_total_images = 0
     all_processed_images = 0
+    all_skipped_images = 0
     all_categories = set()
 
     for path in args.paths:
@@ -324,7 +339,9 @@ if __name__ == "__main__":
         if stats:
             all_total_images += stats['total']
             all_processed_images += stats['processed']
+            all_skipped_images += stats.get('skipped') 
             all_categories.update(stats['categories'])
 
     # 输出总体统计信息
+    logger.info(f"skipped images num:{all_skipped_images}")
     print(f"FINAL_STATISTICS: TOTAL={all_total_images}, PROCESSED={all_processed_images}, CATEGORIES={len(all_categories)}")
