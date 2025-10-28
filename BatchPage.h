@@ -65,6 +65,7 @@ private:
   QRegularExpression m_rxProgress; // ^PROGRESS\s+(\d+)\%
   QRegularExpression m_rxStat;     // ^STAT\b(.*)$
   QRegularExpression m_rxFinal;    // ^FINAL_STATISTICS:\s*TOTAL=(\d+),\s*PROCESSED=(\d+),\s*CATEGORIES=(\d+)
+  bool m_verbose = false; //是否开启调试
 
   struct Stats { qint64 total=0, ok=0, fail=0; } m_sum;
 };

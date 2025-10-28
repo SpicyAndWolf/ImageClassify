@@ -216,15 +216,16 @@ void BatchPage::startNextJob() {
   m_proc->setProcessChannelMode(QProcess::SeparateChannels);
 
   // 调试输出：若启动失败，可据此排查
-  m_log->append(QStringLiteral("[debug] program=%1").arg(m_cfg.pythonExe));
-  m_log->append(QStringLiteral("[debug] args=%1").arg(args.join(" ")));
-  m_log->append(QStringLiteral("[debug] cwd=%1").arg(cwd));
+  auto logDbg = [&](const QString& s){ if (m_verbose) m_log->append(s); };
+  logDbg(QStringLiteral("[debug] program=%1").arg(m_cfg.pythonExe));
+  logDbg(QStringLiteral("[debug] args=%1").arg(args.join(" ")));
+  logDbg(QStringLiteral("[debug] cwd=%1").arg(cwd));
 #ifdef Q_OS_WIN
   if (!m_cfg.embedDir.isEmpty()) {
-    m_log->append(QStringLiteral("[debug] embedDir=%1").arg(m_cfg.embedDir));
-    m_log->append(QStringLiteral("[debug] PATH(head)=%1").arg(env.value("PATH").left(200)));
-    m_log->append(QStringLiteral("[debug] PYTHONHOME=%1").arg(env.value("PYTHONHOME")));
-    m_log->append(QStringLiteral("[debug] PYTHONPATH=%1").arg(env.value("PYTHONPATH")));
+     logDbg(QStringLiteral("[debug] embedDir=%1").arg(m_cfg.embedDir));
+     logDbg(QStringLiteral("[debug] PATH(head)=%1").arg(env.value("PATH").left(200)));
+     logDbg(QStringLiteral("[debug] PYTHONHOME=%1").arg(env.value("PYTHONHOME")));
+     logDbg(QStringLiteral("[debug] PYTHONPATH=%1").arg(env.value("PYTHONPATH")));
   }
 #endif
 
