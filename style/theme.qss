@@ -1,0 +1,83 @@
+/* 全局文字与颜色 */
+QWidget {
+    font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", "Arial";
+    font-size: 13px;
+    color: #1f2937;
+}
+#pageTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+#subtleNote {
+  color: #6b7280;
+}
+
+/* 导航列表（左栏） */
+QListWidget {
+  border: none;
+  background: #f8fafc;
+}
+QListWidget::item {
+  height: 36px;
+  padding-left: 14px;
+  margin: 4px 8px;
+  border-radius: 8px;
+}
+QListWidget::item:selected {
+  background: #e0e7ff;
+  color: #1e3a8a;
+}
+QListWidget::item:hover {
+  background: #eef2ff;
+}
+
+/* 表单与列表 */
+QLineEdit, QTextEdit, QComboBox, QListWidget, QSpinBox {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #ffffff;
+}
+QListWidget {
+  padding: 6px;
+}
+
+/* 按钮（主按钮、普通按钮） */
+QPushButton {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    color: white;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #4f8efc, stop:1 #306fe5);
+    transition: all 0.2s ease;
+}
+
+/* 悬停：略亮 + 提升感 */
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #5c9bff, stop:1 #3b7aed);
+}
+
+/* 按下：深色、微微下沉 */
+QPushButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #2b63cc, stop:1 #2458b8);
+    padding-top: 9px;
+    padding-bottom: 7px;
+}
+
+/* 禁用 */
+QPushButton:disabled {
+    background: #d1d5db;
+    color: #f9fafb;
+}
+
+/* 轻标题标签 */
+QLabel[objectName="sectionTitle"] {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 600;
+}
