@@ -52,6 +52,7 @@ void MainWindow::buildUi() {
   m_nav->addItem(tr("总览"));
   m_nav->addItem(tr("批处理"));
   m_nav->addItem(tr("设置"));
+  m_nav->setObjectName("nav");
 
   // 右侧堆栈
   m_stack = new QStackedWidget(this);

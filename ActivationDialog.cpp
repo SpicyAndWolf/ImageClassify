@@ -8,12 +8,14 @@
 ActivationDialog::ActivationDialog(LicenseManager* lic, QWidget* parent)
   : QDialog(parent), m_lic(lic) {
   setWindowTitle(tr("激活"));
+  setObjectName("ActivationDialog");
   setModal(true);
   auto* v = new QVBoxLayout(this);
   m_mid = new QLabel(tr("设备指纹：%1").arg(lic->machineId()), this);
   m_cdk = new QLineEdit(this); m_cdk->setPlaceholderText(tr("请输入激活码（CDK）"));
   m_btn = new QPushButton(tr("激活"), this);
-  m_tip = new QLabel(this); m_tip->setStyleSheet("color:#d14343;");
+  m_tip = new QLabel(this);
+  m_tip->setObjectName("activateTip");
   v->addWidget(m_mid);
   v->addWidget(m_cdk);
   v->addWidget(m_btn);

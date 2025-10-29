@@ -16,6 +16,4 @@ private:
     QLineEdit* m_emailEdit {nullptr};
     QLineEdit* m_phoneEdit {nullptr};
     QPushButton* m_closeBtn {nullptr};
-
-    void applyModernStyle(); // QSS
 };

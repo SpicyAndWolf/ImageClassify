@@ -83,6 +83,7 @@ void BatchPage::buildUi() {
   m_log = new QTextEdit(this);
   m_log->setReadOnly(true);
   m_log->setMinimumHeight(140);
+  m_log->setObjectName("logBox");
   v->addWidget(m_log);
 
   connect(m_btnAdd,  &QPushButton::clicked, [this]{

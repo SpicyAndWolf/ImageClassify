@@ -1,120 +1,192 @@
-/* 全局文字与颜色 */
-QWidget {
-    font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", "Arial";
-    font-size: 13px;
-    color: #1f2937;
-}
-#pageTitle {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-#subtleNote {
-  color: #6b7280;
-}
-
-/* 导航列表（左栏） */
-QListWidget {
-  border: none;
-  background: #f8fafc;
-  outline: none;
-}
-QListWidget::item {
-  height: 36px;
-  padding-left: 14px;
-  margin: 4px 8px;
-  border-radius: 8px;
-}
-QListWidget::item:selected {
-  background: #e0e7ff;
-  color: #1e3a8a;
-}
-QListWidget::item:hover {
-  background: #eef2ff;
-}
-
-/* 表单与列表 */
-QLineEdit, QTextEdit, QComboBox, QListWidget, QSpinBox {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 6px 10px;
-  background: #ffffff;
-}
-QListWidget {
-  padding: 6px;
-}
-
-/* 按钮（主按钮、普通按钮） */
+/* === 全局按钮：删除 transition 行（Qt 不支持）=== */
 QPushButton {
     border: none;
     border-radius: 8px;
-    padding: 8px 16px;
+    padding: 8px 14px;
     font-weight: 500;
     color: white;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 #4f8efc, stop:1 #306fe5);
-    transition: all 0.2s ease;
+    /* transition: all 0.2s ease;  <-- 删除这类行 */
 }
-
-/* 悬停：略亮 + 提升感 */
 QPushButton:hover {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 #5c9bff, stop:1 #3b7aed);
 }
-
-/* 按下：深色、微微下沉 */
 QPushButton:pressed {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 #2b63cc, stop:1 #2458b8);
     padding-top: 9px;
     padding-bottom: 7px;
 }
-
-/* 禁用 */
 QPushButton:disabled {
     background: #d1d5db;
     color: #f9fafb;
 }
 
-/* 轻标题标签 */
-QLabel[objectName="sectionTitle"] {
-  font-size: 14px;
-  color: #374151;
-  font-weight: 600;
+/* === ContactDialog 统一收口（将 C++ 里的大段 setStyleSheet 移回这里）=== */
+#ContactDialog {
+    background: #ffffff;
 }
-
-
-/* === 批处理列表专属：放宽 item 高度，避免子控件被裁 === */
-QListWidget#batchList::item {
-  margin: 4px 4px;
-  padding-left: 8px;      /* 行内我们自己有布局，这里适当缩小左 padding */
-  border-radius: 8px;
+#ContactDialog QLineEdit {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 6px 10px;
+    selection-background-color: #bfdbfe; /* 选区色 */
 }
+#ContactDialog QLineEdit:focus {
+    border-color: #60a5fa;
+    background: #ffffff;
+}
+#ContactDialog QPushButton {
+    background: #2563eb; /* 主按钮 */
+}
+#ContactDialog QPushButton:hover { background: #3b82f6; }
+#ContactDialog QPushButton:pressed { background: #1d4ed8; }
 
-/* === 危险按钮（删除）——只作用于带标识的按钮，不影响全局主按钮 === */
+/* 行容器里的“复制”按钮：弱化为次要按钮风格（见 ContactDialog::makeRow） */
+#ContactDialog QWidget > QPushButton {
+    background: #e2e8f0; /* slate-200 */
+    color: #0f172a;
+}
+#ContactDialog QWidget > QPushButton:hover { background: #cbd5e1; }
+
+/* === ActivationDialog 统一收口（去掉 C++ 内联颜色）=== */
+#ActivationDialog #activateTip {
+    color: #d14343;
+}
+#ActivationDialog QLineEdit {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+#ActivationDialog QPushButton {
+    background: #16a34a; /* 绿色激活 */
+}
+#ActivationDialog QPushButton:hover { background: #22c55e; }
+#ActivationDialog QPushButton:pressed { background: #15803d; }
+
+/* === BatchPage 钩子（已设置 objectName / property）=== */
+#batchList {
+    outline: none;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
 QPushButton#btnDelete,
 QPushButton[danger="true"] {
-  color: #fff;
-  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-      stop:0 #ef4444, stop:1 #dc2626); /* 红色 */
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #ef4444, stop:1 #dc2626);
+    color: #fff;
 }
-
 QPushButton#btnDelete:hover,
 QPushButton[danger="true"]:hover {
-  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-      stop:0 #f05252, stop:1 #e03e3e);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #f87171, stop:1 #ef4444);
 }
-
 QPushButton#btnDelete:pressed,
 QPushButton[danger="true"]:pressed {
-  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-      stop:0 #b91c1c, stop:1 #991b1b);
-  padding-top: 9px;
-  padding-bottom: 7px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #b91c1c, stop:1 #991b1b);
+    padding-top: 9px;
+    padding-bottom: 7px;
 }
-
 QPushButton#btnDelete:disabled,
 QPushButton[danger="true"]:disabled {
-  background: #fca5a5;
-  color: #fee2e2;
+    background: #fca5a5;
+    color: #fee2e2;
+}
+
+/* === 左侧导航（QListWidget）=== */
+QListWidget#nav {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 6px 4px;      /* 容器内边距 */
+  outline: 0;
+}
+QListWidget#nav::item {
+  height: 32px;
+  margin: 3px 6px;       /* 每行上下/左右间距 */
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #334155;        /* slate-700 */
+}
+QListWidget#nav::item:hover {
+  background: #e2e8f0;   /* slate-200 */
+}
+QListWidget#nav::item:selected {
+  background: #dbeafe;   /* sky-100 */
+  color: #1e40af;        /* indigo-900 */
+  font-weight: 600;
+}
+QListWidget#nav::item:selected:hover {
+  background: #bfdbfe;   /* sky-200 */
+}
+QListWidget#nav::item:disabled {
+  color: #94a3b8;
+}
+QListWidget#nav QScrollBar:vertical {
+  width: 8px;
+  background: transparent;
+}
+QListWidget#nav QScrollBar::handle:vertical {
+  background: #cbd5e1;
+  border-radius: 4px;
+  min-height: 24px;
+}
+QListWidget#nav QScrollBar::handle:vertical:hover {
+  background: #94a3b8;
+}
+QListWidget#nav QScrollBar::add-line:vertical,
+QListWidget#nav QScrollBar::sub-line:vertical {
+  height: 0;
+}
+
+/* === 日志框 === */
+QTextEdit#logBox,
+QPlainTextEdit#logBox,
+QTextBrowser#logBox {
+    background: #f9fafb;            /* 轻灰底 */
+    border: 1px solid #e5e7eb;      /* 淡灰边 */
+    border-radius: 8px;
+    color: #1e293b;                 /* 深灰文字 */
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 13px;
+    padding: 6px 8px;
+    selection-background-color: #bfdbfe; /* 蓝色选中区 */
+}
+/* 只读状态：略深背景以示区别 */
+QTextEdit#logBox:!editable,
+QPlainTextEdit#logBox:!editable,
+QTextBrowser#logBox {
+    background: #f3f4f6;
+}
+/* 滚动条细化，与导航条保持一致 */
+QTextEdit#logBox QScrollBar:vertical,
+QPlainTextEdit#logBox QScrollBar:vertical,
+QTextBrowser#logBox QScrollBar:vertical {
+    width: 8px;
+    background: transparent;
+}
+QTextEdit#logBox QScrollBar::handle:vertical,
+QPlainTextEdit#logBox QScrollBar::handle:vertical,
+QTextBrowser#logBox QScrollBar::handle:vertical {
+    background: #cbd5e1;
+    border-radius: 4px;
+    min-height: 24px;
+}
+QTextEdit#logBox QScrollBar::handle:vertical:hover,
+QPlainTextEdit#logBox QScrollBar::handle:vertical:hover,
+QTextBrowser#logBox QScrollBar::handle:vertical:hover {
+    background: #94a3b8;
+}
+QTextEdit#logBox QScrollBar::add-line:vertical,
+QTextEdit#logBox QScrollBar::sub-line:vertical,
+QPlainTextEdit#logBox QScrollBar::add-line:vertical,
+QPlainTextEdit#logBox QScrollBar::sub-line:vertical,
+QTextBrowser#logBox QScrollBar::add-line:vertical,
+QTextBrowser#logBox QScrollBar::sub-line:vertical {
+    height: 0;
 }

@@ -14,6 +14,7 @@ ContactDialog::ContactDialog(const QString& name,
     : QDialog(parent)
 {
     setWindowTitle(tr("联系管理员"));
+    setObjectName("ContactDialog");
     setModal(true);
     setMinimumWidth(420);
 
@@ -66,56 +67,5 @@ ContactDialog::ContactDialog(const QString& name,
     root->addWidget(m_closeBtn, 0, Qt::AlignRight);
     setLayout(root);
 
-    applyModernStyle();
 }
 
-void ContactDialog::applyModernStyle()
-{
-    // 轻量现代 QSS（圆角、浅阴影、焦点高亮、按钮悬停）
-    setStyleSheet(R"qss(
-        QDialog {
-            background: #ffffff;
-            border: 1px solid #e6e8eb;
-            border-radius: 12px;
-        }
-        QLabel {
-            color: #334155; /* slate-700 */
-            font-size: 14px;
-        }
-        QLineEdit {
-            background: #f8fafc; /* slate-50 */
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 8px 10px;
-            font-size: 14px;
-            color: #0f172a; /* slate-900 */
-            selection-background-color: #dbeafe; /* blue-100 */
-        }
-        QLineEdit:focus {
-            border: 1px solid #60a5fa; /* blue-400 */
-            background: #ffffff;
-        }
-        QPushButton {
-            background: #0ea5e9; /* sky-600 */
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 8px 14px;
-            font-size: 14px;
-        }
-        QPushButton:hover {
-            background: #0284c7; /* sky-700 */
-        }
-        QPushButton:pressed {
-            background: #0369a1; /* sky-800 */
-        }
-        /* 行容器里的“复制”按钮：弱化为次要按钮风格 */
-        QWidget > QPushButton {
-            background: #e2e8f0; /* slate-200 */
-            color: #0f172a;
-        }
-        QWidget > QPushButton:hover {
-            background: #cbd5e1; /* slate-300 */
-        }
-    )qss");
-}
