@@ -17,6 +17,7 @@ QWidget {
 QListWidget {
   border: none;
   background: #f8fafc;
+  outline: none;
 }
 QListWidget::item {
   height: 36px;
@@ -80,4 +81,40 @@ QLabel[objectName="sectionTitle"] {
   font-size: 14px;
   color: #374151;
   font-weight: 600;
+}
+
+
+/* === 批处理列表专属：放宽 item 高度，避免子控件被裁 === */
+QListWidget#batchList::item {
+  margin: 4px 4px;
+  padding-left: 8px;      /* 行内我们自己有布局，这里适当缩小左 padding */
+  border-radius: 8px;
+}
+
+/* === 危险按钮（删除）——只作用于带标识的按钮，不影响全局主按钮 === */
+QPushButton#btnDelete,
+QPushButton[danger="true"] {
+  color: #fff;
+  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+      stop:0 #ef4444, stop:1 #dc2626); /* 红色 */
+}
+
+QPushButton#btnDelete:hover,
+QPushButton[danger="true"]:hover {
+  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+      stop:0 #f05252, stop:1 #e03e3e);
+}
+
+QPushButton#btnDelete:pressed,
+QPushButton[danger="true"]:pressed {
+  background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+      stop:0 #b91c1c, stop:1 #991b1b);
+  padding-top: 9px;
+  padding-bottom: 7px;
+}
+
+QPushButton#btnDelete:disabled,
+QPushButton[danger="true"]:disabled {
+  background: #fca5a5;
+  color: #fee2e2;
 }

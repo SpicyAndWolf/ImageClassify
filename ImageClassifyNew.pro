@@ -19,6 +19,7 @@ SOURCES += \
     ActivationDialog.cpp \
     ApiClient.cpp \
     BatchPage.cpp \
+    ContactDialog.cpp \
     DeviceFingerprint.cpp \
     LicenseManager.cpp \
     SettingsStore.cpp \
@@ -29,6 +30,7 @@ HEADERS += \
     ActivationDialog.h \
     ApiClient.h \
     BatchPage.h \
+    ContactDialog.h \
     DeviceFingerprint.h \
     LicenseManager.h \
     SettingsStore.h \
