@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QFile>
 #include <QDebug>
+#include <QIcon>
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +18,7 @@ int main(int argc, char *argv[])
     }
 
     MainWindow w;
+    w.setWindowIcon(QIcon(":/icons/icon.svg"));
     w.show();
     return a.exec();
 }
