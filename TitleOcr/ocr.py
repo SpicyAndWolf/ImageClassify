@@ -1,26 +1,86 @@
-import easyocr
+from paddleocr import PaddleOCR
 import cv2
 import os
 import shutil
-from pathlib import Path
-import tempfile
 import argparse
 import signal
 import logging
 import sys
 from datetime import datetime
-import ssl
 import numpy as np
 
-# 解决在新环境中SSL证书验证失败的问题
-# easyocr首次运行时需要下载模型，这可能会因为缺少系统根证书而失败
-# 这段代码会尝试禁用SSL证书验证，仅用于下载模型
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
+
+# 模型不在本地时下载
+def _try_auto_download_models(lang: str = 'ch'):
+    """
+    尝试用 PaddleOCR 的内置下载器拉取模型到 ~/.paddleocr，
+    下载完成后，把 det/rec 模型目录复制到我们期望的 DET_DIR/REC_DIR。
+    """
+    from shutil import copy2
+    from glob import glob
+
+    logger.warning("未找到本地模型，尝试使用 PaddleOCR 内置下载器在线获取...")
+
+    # 1) 触发下载（不传 det/rec 路径）
+    try:
+        _tmp_ocr = PaddleOCR(lang=lang, use_angle_cls=False, use_gpu=False, show_log=False)
+        logger.info("内置下载完成（或缓存可用），开始定位模型路径...")
+    except Exception as e:
+        logger.error(f"内置下载失败：{e}")
+        return False
+
+    # 2) 在 ~/.paddleocr 下寻找 ch 的 det/rec infer 目录（按 v5/未来版本命名变化做模糊匹配）
+    home = os.path.expanduser("~")
+    cache_root = os.path.join(home, ".paddleocr")
+    # 可能的子目录（不同版本/whl会有层级差异，做几种候选）
+    candidates = [
+        cache_root,
+        os.path.join(cache_root, "whl"),
+        os.path.join(cache_root, "models"),
+    ]
+
+    def _find_infer_dir(patterns):
+        for base in candidates:
+            for pat in patterns:
+                matches = glob(os.path.join(base, pat), recursive=True)
+                for p in matches:
+                    # 需要包含三件套文件
+                    ok = all(os.path.exists(os.path.join(p, f)) for f in
+                             ["inference.pdmodel", "inference.pdiparams", "inference.pdiparams.info"])
+                    if ok:
+                        return p
+        return None
+
+    # 尽量匹配 PP-OCRv5，其次泛匹配任意 ch_*_det/rec_infer
+    det_src = _find_infer_dir([
+        "**/ch_PP-OCRv5_*det*infer*",
+        "**/ch_*det*infer*",
+    ])
+    rec_src = _find_infer_dir([
+        "**/ch_PP-OCRv5_*rec*infer*",
+        "**/ch_*rec*infer*",
+    ])
+
+    if not det_src or not rec_src:
+        logger.error(f"未能在缓存中找到下载后的 det 或 rec 目录：det={det_src}, rec={rec_src}")
+        return False
+
+    # 3) 复制到你的目标目录（DET_DIR/REC_DIR）
+    for src, dst in [(det_src, DET_DIR), (rec_src, REC_DIR)]:
+        os.makedirs(dst, exist_ok=True)
+        for f in ["inference.pdmodel", "inference.pdiparams", "inference.pdiparams.info"]:
+            copy2(os.path.join(src, f), os.path.join(dst, f))
+        logger.info(f"已复制模型到：{dst}")
+
+    return True
+
+# 检验模型是否在本地
+def _assert_model_ok(model_dir: str, name: str):
+    files = ["inference.pdmodel", "inference.pdiparams", "inference.pdiparams.info"]
+    missing = [f for f in files if not os.path.exists(os.path.join(model_dir, f))]
+    if missing:
+        logger.error(f"{name} 模型缺文件: {missing}，期望在：{model_dir}")
+        sys.exit(2)
 
 # 配置日志
 def setup_logging(log_level=logging.INFO):
@@ -43,8 +103,8 @@ def setup_logging(log_level=logging.INFO):
         format=log_format,
         datefmt=date_format,
         handlers=[
-            logging.FileHandler(log_filename, encoding='utf-8'),  # 文件输出
-            logging.StreamHandler(sys.stdout)  # 控制台输出
+            logging.FileHandler(log_filename, encoding='utf-8'),
+            logging.StreamHandler(sys.stdout)
         ]
     )
     
@@ -67,86 +127,83 @@ def signal_handler(signum, frame):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
-# 用于把ocr模型移动至目标目录，这样就不用下载了
-def copy_file_to_easyocr_model_dir(filename):
-    """
-    将指定文件从当前目录复制到当前用户的EasyOCR模型目录下。
+# ==== PaddleOCR 全局单例与本地模型路径 ====
+BASE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+PPOCR_LOCAL_ROOT = os.path.join(BASE_DIR, "models", "ppocrv5_mobile")
 
-    Args:
-        filename (str): 要复制的文件名。
+# 你随包分发的本地模型目录（确保三文件齐全）
+DET_DIR = os.path.join(PPOCR_LOCAL_ROOT, "ch_PP-OCRv5_det")
+REC_DIR = os.path.join(PPOCR_LOCAL_ROOT, "ch_PP-OCRv5_rec")
 
-    Returns:
-        bool: 如果复制成功返回 True，否则返回 False。
-    """
-    try:
-        # 获取源文件路径
-        source_path = os.path.join(os.getcwd(), "pth", filename)
+# 校验模型是否存在
+need_try_download = False
+try:
+    _assert_model_ok(DET_DIR, "检测(det)")
+    _assert_model_ok(REC_DIR, "识别(rec)")
+except SystemExit:
+    need_try_download = True
 
-        # 检查源文件是否存在
-        if not os.path.exists(source_path):
-            logger.error(f"错误：源文件 '{source_path}' 不存在。")
-            return False
+if need_try_download:
+    if not _try_auto_download_models(lang='ch'):
+        logger.error("模型下载/复制失败，无法继续。")
+        sys.exit(2)
 
-        # 获取用户主目录
-        user_home_dir = os.path.expanduser('~')
-        destination_dir = os.path.join(user_home_dir, '.EasyOCR', 'model')
-
-        # 验证文件是否已存在
-        final_path = os.path.join(destination_dir, filename)
-        if os.path.exists(final_path):
-            logger.info(f"文件已成功位于: '{final_path}'")
-            return True
-
-        # 确保目标目录存在
-        os.makedirs(destination_dir, exist_ok=True)
-
-        # 执行复制操作
-        logger.info(f"正在复制 '{source_path}' 至 '{destination_dir}'...")
-        shutil.copy2(source_path, destination_dir)
-        
-        # 验证文件是否真的复制过去了
-        if os.path.exists(final_path):
-            logger.info(f"文件已成功位于: '{final_path}'")
-            return True
-        else:
-            logger.error("错误：复制后文件验证失败。")
-            return False
-
-    except PermissionError:
-        logger.error("错误：权限不足。请尝试使用管理员权限运行此脚本。")
-        return False
-    except Exception as e:
-        logger.error(f"发生未知错误: {e}")
-        return False
+# 初始化 PaddleOCR（模块级单例，避免重复创建）
+try:
+    OCR = PaddleOCR(
+        use_angle_cls=False, 
+        lang='ch',
+        det_model_dir=DET_DIR,
+        rec_model_dir=REC_DIR,
+        show_log=False,
+        use_gpu=False
+    )
+    logger.info(f"PaddleOCR 初始化成功，det={DET_DIR}, rec={REC_DIR}")
+except Exception as e:
+    logger.error(f"PaddleOCR 初始化失败：{e}")
+    OCR = None
 
 # 识别图片并返回识别结果
 def ocrImg(img_data):
-    reader = easyocr.Reader(['en'])
-
-    # 获取图片宽度，用于判断左右侧
     if img_data is None:
         logger.error("图像数据为空")
         return None
+    if OCR is None:
+        logger.error("PaddleOCR 未初始化")
+        return None
+
+    # OpenCV BGR -> 直接传 numpy 数组即可
+    # 返回结构: [ [ [ [x1,y1],...,[x4,y4] ], (text, score) ], ... ]
+    try:
+        result = OCR.ocr(img_data, cls=False)
+    except Exception as e:
+        logger.error(f"OCR 识别异常：{e}")
+        return None
+
+    if not result or not result[0]:
+        logger.warning("未识别到文本")
+        return None
+
+    lines = result[0]
     image_height, image_width, _ = img_data.shape
 
-    # 从图片中识别文本，直接传递图像数据
-    results = reader.readtext(img_data)
-
-    # 筛选并提取左侧的目标文本
+    # 取最靠左且在上1/3区域的第一个文本
     target_text = ""
-    for (bbox, text, prob) in results:
-        top_left_x = bbox[0][0]
+    for line in lines:
+        box = line[0]              # 4 点坐标
+        text, prob = line[1]       # 文本与分数
+        top_left_x = box[0][0]
         if top_left_x < image_width / 10:
             target_text = text
-            break # 找到第一个满足条件的就停止
+            break
 
-    # 处理结果
     if target_text:
         text = target_text.split(' ')[0]
         return text
     else:
         logger.warning("未识别到目标文字")
         return None
+
 
 # 裁剪区域
 def cropImg(image_path):
@@ -209,6 +266,7 @@ def processAllImages(imgs_folder, res_path="./res"):
     total_images = 0
     processed_images = 0
     skipped_images = 0 
+    failed_images = 0
     categories = set()  # 使用集合来统计不重复的类别
     
     # 检查imgs文件夹是否存在
@@ -239,6 +297,10 @@ def processAllImages(imgs_folder, res_path="./res"):
     # 统计图片总数
     total_images = len(image_files)
     logger.info(f"找到 {total_images} 个图片文件")
+
+    # 计算完 total_images 之后，先把初始 STAT 发给前端
+    print(f"STAT total={total_images} ok=0 fail=0", flush=True)
+    print("PROGRESS 0%", flush=True)
     
     # 处理每个图片文件
     for image_file in image_files:
@@ -281,6 +343,7 @@ def processAllImages(imgs_folder, res_path="./res"):
                     # 创建文件夹失败，复制到错误文件夹
                     logger.error(f"创建文件夹失败: {e}，将图片复制到错误文件夹")
                     error_path = os.path.join(error_folder, image_file)
+                    failed_images += 1
                     try:
                         shutil.copy(image_path, error_path)
                         logger.info(f"图片已复制到错误文件夹: {error_path}")
@@ -290,6 +353,7 @@ def processAllImages(imgs_folder, res_path="./res"):
                 # OCR识别失败，复制到错误文件夹
                 logger.error(f"OCR识别失败，将图片复制到错误文件夹")
                 error_path = os.path.join(error_folder, image_file)
+                failed_images += 1
                 try:
                     shutil.copy(image_path, error_path)
                     logger.info(f"图片已复制到错误文件夹: {error_path}")
@@ -299,11 +363,19 @@ def processAllImages(imgs_folder, res_path="./res"):
             # 裁剪失败，复制到错误文件夹
             logger.error(f"图片裁剪失败，将图片复制到错误文件夹")
             error_path = os.path.join(error_folder, image_file)
+            failed_images += 1
             try:
                 shutil.copy(image_path, error_path)
                 logger.info(f"图片已复制到错误文件夹: {error_path}")
             except Exception as e:
                 logger.error(f"复制图片到错误文件夹失败: {e}")
+
+        # 每处理完一张（无论成功/失败/跳过），都更新进度与 STAT：
+        done = processed_images + failed_images + skipped_images
+        if total_images > 0:
+            percent = int(done * 100 / total_images)
+            print(f"PROGRESS {percent}%", flush=True)
+        print(f"STAT total={total_images} ok={processed_images} fail={failed_images}", flush=True)
     
     if should_stop:
         logger.warning("\n处理被中断！")
@@ -318,10 +390,6 @@ def processAllImages(imgs_folder, res_path="./res"):
 
 # 调用函数
 if __name__ == "__main__":
-    # 初始化模型文件，避免下载时网络问题
-    copy_file_to_easyocr_model_dir("craft_mlt_25k.pth")
-    copy_file_to_easyocr_model_dir("english_g2.pth")
-
     # 获取待处理图像所在文件路径
     parser = argparse.ArgumentParser(description="OCR and Image Processing")
     parser.add_argument('--resPath', '-o', default='./res', help='输出文件夹路径')

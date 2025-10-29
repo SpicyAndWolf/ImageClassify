@@ -351,12 +351,11 @@ void BatchPage::parseStdoutLines(const QString& chunk) {
       continue;
     }
 
-    // 2) STAT total/ok/fail
-    m = m_rxStat.match(line);
-    if (m.hasMatch()) {
-      const QString s = m.captured(1);
-      qint64 total=0, ok=0, fail=0;
-      const auto parts = s.split(QRegularExpression("[,\\s]+"), Qt::SkipEmptyParts);
+    // 2) 统计行（覆盖式快照）：STAT total=<x> ok=<y>|processed=<y> fail=<z>
+    if (auto mm = m_rxStat.match(line); mm.hasMatch()) {
+      const QString payload = mm.captured(1);
+      qint64 total=-1, ok=-1, fail=-1;
+      const auto parts = payload.split(QRegularExpression("[,\\s]+"), Qt::SkipEmptyParts);
       for (const auto& kv : parts) {
         const auto pair = kv.split('=');
         if (pair.size()!=2) continue;
@@ -366,27 +365,20 @@ void BatchPage::parseStdoutLines(const QString& chunk) {
         else if (k=="ok" || k=="processed") ok=v;
         else if (k=="fail") fail=v;
       }
-      m_sum.total += total;
-      m_sum.ok    += ok;
-      m_sum.fail  += fail;
+      if (total>=0) m_sum.total = total;
+      if (ok>=0)    m_sum.ok    = ok;
+      if (fail>=0)  m_sum.fail  = fail;
       updateStatsLabel();
       continue;
     }
 
-    // 3) FINAL_STATISTICS（兼容你旧版）
+    // 3) FINAL_STATISTICS
     m = m_rxFinal.match(line);
     if (m.hasMatch()) {
-      const qint64 total = m.captured(1).toLongLong();
-      const qint64 processed = m.captured(2).toLongLong();
-      // categories 不计入 ok/fail，但可打印
-      const qint64 categories = m.captured(3).toLongLong();
-      m_sum.total += total;
-      m_sum.ok    += processed;
-      // 若你有失败数，可由 total-processed 推算（按需）
-      m_sum.fail  += qMax<qint64>(0, total - processed);
       appendLogLine(QStringLiteral("分类完成：total=%1 processed=%2 categories=%3")
-                    .arg(total).arg(processed).arg(categories));
-      updateStatsLabel();
+                    .arg(m.captured(1))
+                    .arg(m.captured(2))
+                    .arg(m.captured(3)));
       continue;
     }
 

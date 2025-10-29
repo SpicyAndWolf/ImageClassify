@@ -2,6 +2,7 @@
 #include "SettingsStore.h"
 #include <QStandardPaths>
 #include <QDir>
+#include <QDebug>
 
 static QString configFilePath() {
   const QString base = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
@@ -9,6 +10,8 @@ static QString configFilePath() {
 
   // 统一到独立 ini 文件，避免随程序目录走
   return base + "/config.ini";
+
+
 }
 
 SettingsStore::SettingsStore(QObject* p)

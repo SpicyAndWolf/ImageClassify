@@ -20,12 +20,7 @@
 #include <QTextStream>
 #include <QRegularExpression>
 
-static void loadAppTheme() {
-  // Step 5 里也给出完整 QSS，这里可直接调用；为了可独立编译，这里留空函数占位
-}
-
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
-  loadAppTheme();
   m_store = new SettingsStore(this);
   m_lic   = new LicenseManager(m_store, this);
 
