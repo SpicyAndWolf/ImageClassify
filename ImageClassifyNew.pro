@@ -52,3 +52,5 @@ RESOURCES += \
 
 DISTFILES += \
     style/theme.qss
+
+RC_ICONS = icons/icon.ico
