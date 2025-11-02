@@ -25,4 +25,4 @@ CREATE TABLE IF NOT EXISTS activation (
 
 -- 示例数据
 INSERT IGNORE INTO cdk(code, allowed_devices, status, expires_at)
-VALUES ('TEST-1111-2222-3333', 2, 'active', DATE_ADD(UTC_TIMESTAMP(), INTERVAL 365 DAY));
+VALUES ('TEST-NEW-2222-3333', 2, 'active', DATE_ADD(UTC_TIMESTAMP(), INTERVAL 365 DAY));
