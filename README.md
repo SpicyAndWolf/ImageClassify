@@ -29,7 +29,7 @@ Qt 版本 5.14.2，使用 MinGW64，Windows 环境。python 要求配置 torch �
 
   ```
 
-- `python312._pth` 内容，需创建 `site-packages` 目录：
+- `python312._pth` 内容（需创建 `site-packages` 目录）
 
   ```
   python312.zip
