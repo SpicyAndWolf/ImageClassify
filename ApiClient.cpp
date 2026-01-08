@@ -11,7 +11,7 @@ void ApiClient::setBaseUrl(const QUrl& base) { m_base = base; }
 void ApiClient::verifyAndBind(const QString& cdk, const QString& machineId) {
   // TODO: 替换为你的阿里云函数网关基础地址
   const QUrl url = m_base.isEmpty()
-      ? QUrl("http://image-cify-auth-zvtflexxfj.cn-hangzhou.fcapp.run/license/verify-and-bind")
+      ? QUrl("https://image-cify-auth-zvtflexxfj.cn-hangzhou.fcapp.run/license/verify-and-bind")
       : m_base.resolved(QUrl("/license/verify-and-bind"));
 
   QNetworkRequest req(url);
